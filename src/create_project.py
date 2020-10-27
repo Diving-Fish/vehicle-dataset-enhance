@@ -69,10 +69,11 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
 
 # Class / Thread for creating a new project
 class ProjectCreateThread(threading.Thread):
-    def __init__(self, window):
+    def __init__(self, opt, progressBar, pushButton):
         super(ProjectCreateThread, self).__init__()
-        self.window = window
-        self.opt = window.opt
+        self.progressBar = progressBar
+        self.pushButton = pushButton
+        self.opt = opt
         self.setDaemon(True)
         self.exitcode = 0
         self.message = ''
@@ -224,7 +225,7 @@ class ProjectCreateThread(threading.Thread):
                 print('%s %sDone. (%.3fs)' % (caption, s, t2 - t1))
                 new_progress = int(self.progress_bar[0] * 100 / self.progress_bar[1])
                 if new_progress != progress:
-                    self.window.progressBar.setValue(new_progress)
+                    self.progressBar.setValue(new_progress)
                     progress = new_progress
 
                 # Stream results
@@ -252,3 +253,4 @@ class ProjectCreateThread(threading.Thread):
         print('Done. (%.3fs)' % (time.time() - t0))
         if isinstance(vid_writer, cv2.VideoWriter):
             vid_writer.release()
+        self.pushButton.setEnabled(True)

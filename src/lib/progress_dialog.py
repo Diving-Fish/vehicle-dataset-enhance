@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_CreateProgressDialog(object):
     def setupUi(self, CreateProgressDialog):
         CreateProgressDialog.setObjectName("CreateProgressDialog")
-        CreateProgressDialog.resize(560, 50)
+        CreateProgressDialog.resize(560, 89)
         self.progressBar = QtWidgets.QProgressBar(CreateProgressDialog)
         self.progressBar.setGeometry(QtCore.QRect(10, 10, 541, 31))
         font = QtGui.QFont()
@@ -23,6 +23,13 @@ class Ui_CreateProgressDialog(object):
         self.progressBar.setFont(font)
         self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
+        self.pushButton = QtWidgets.QPushButton(CreateProgressDialog)
+        self.pushButton.setGeometry(QtCore.QRect(160, 50, 251, 25))
+        font = QtGui.QFont()
+        font.setFamily("微软雅黑")
+        font.setPointSize(10)
+        self.pushButton.setFont(font)
+        self.pushButton.setObjectName("pushButton")
 
         self.retranslateUi(CreateProgressDialog)
         QtCore.QMetaObject.connectSlotsByName(CreateProgressDialog)
@@ -31,3 +38,4 @@ class Ui_CreateProgressDialog(object):
         _translate = QtCore.QCoreApplication.translate
         CreateProgressDialog.setWindowTitle(_translate("CreateProgressDialog", "创建新项目"))
         self.progressBar.setFormat(_translate("CreateProgressDialog", "%p%"))
+        self.pushButton.setText(_translate("CreateProgressDialog", "打开项目"))

@@ -8,6 +8,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from lib.call_dialog import Dialog
 from lib.main_window import Ui_MainWindow
 from lib.call_create_project_window import CreateProjectDialog
+from lib.call_setting_dialog import SettingDialog
 import os
 from cv2 import cv2
 
@@ -18,11 +19,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.createProjectButton.triggered.connect(self.new_project)
         self.loadProjectButton.triggered.connect(self.load_project)
+        self.settingButton.triggered.connect(self.setting)
         self.exportData.setEnabled(False)
         self.saveProjectButton.setEnabled(False)
         self.groupBox.setHidden(True)
         self.groupBox_2.setHidden(True)
         self.show()
+
+    def setting(self):
+        self.setting_dialog = SettingDialog()
 
     def finish_create(self, path, project_path):
         self.load(path, project_path)
@@ -35,6 +40,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.openDialog.setFileMode(QFileDialog.ExistingFile)
         path, file_type = self.openDialog.getOpenFileName(self, 'Choose a File', os.getcwd(),
                                                           "Vehicle Dataset Enhance Project(*.vdep)")
+        if path == "":
+            return
         self.load(path[0:path.rindex('/')], path)
 
     def load(self, project_dir, path):

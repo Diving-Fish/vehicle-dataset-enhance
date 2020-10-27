@@ -345,6 +345,7 @@
     <property name="title">
      <string>设置</string>
     </property>
+    <addaction name="settingButton"/>
    </widget>
    <addaction name="fileMenu"/>
    <addaction name="settingMenu"/>
@@ -367,6 +368,11 @@
   <action name="saveProjectButton">
    <property name="text">
     <string>保存当前项目</string>
+   </property>
+  </action>
+  <action name="settingButton">
+   <property name="text">
+    <string>设置</string>
    </property>
   </action>
  </widget>
