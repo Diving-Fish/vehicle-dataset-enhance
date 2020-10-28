@@ -250,7 +250,7 @@ class ProjectCreateThread(threading.Thread):
                                                      cv2.VideoWriter_fourcc(*self.opt['fourcc']), fps, (w, h))
                     vid_writer.write(im0)
 
-        print('Done. (%.3fs)' % (time.time() - t0))
         if isinstance(vid_writer, cv2.VideoWriter):
             vid_writer.release()
+        print('Done. (%.3fs)' % (time.time() - t0))
         self.pushButton.setEnabled(True)

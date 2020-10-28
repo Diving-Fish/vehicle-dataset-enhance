@@ -10,6 +10,7 @@ from lib.main_window import Ui_MainWindow
 from lib.call_create_project_window import CreateProjectDialog
 from lib.call_setting_dialog import SettingDialog
 import os
+from lib.setting_manager import SettingManager
 from cv2 import cv2
 
 
@@ -157,7 +158,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         w, h = self.cap.w, self.cap.h
         fw = open(path + '.txt' if path[-4:] != '.txt' else '', 'w')
         for frame in self.track_results:
-            detections = self.track_results[frame]
+            detections = self.cap.get_boxes(frame)
             for detection in detections:
                 if detection[4] in self.mark_map:
                     tup = self.mark_map[detection[4]]
@@ -215,7 +216,7 @@ class VideoThread(threading.Thread):
         self.window.refresh_status_bar()
 
     def draw_box(self):
-        boxes = self.window.track_results[self.frame_no]
+        boxes = self.get_boxes(self.frame_no)
         for box in boxes:
             x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
             id = box[4]
@@ -226,3 +227,24 @@ class VideoThread(threading.Thread):
             cv2.rectangle(self.frame, (x1, y1), (x2, y2), color, 3)
             cv2.rectangle(self.frame, (x1, y1), (x1 + t_size[0] + 3, y1 + t_size[1] + 4), color, -1)
             cv2.putText(self.frame, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 2)
+
+    def get_boxes(self, frame_no):
+        # TODO: Fix that if box has been erased, program doesn't consider all boxes has been marked
+        boxes = self.window.track_results[frame_no]
+        if SettingManager.config['replace_track_box']:
+            detections = self.window.detections[frame_no]
+            for box in boxes:
+                cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+                for detection in detections:
+                    if abs(cx - detection[0]) < self.w / 50 and abs(cy - detection[1]) < self.h / 50:
+                        box[0] = int(detection[0] - detection[2] / 2)
+                        box[1] = int(detection[1] - detection[3] / 2)
+                        box[2] = int(detection[0] + detection[2] / 2)
+                        box[3] = int(detection[1] + detection[3] / 2)
+                        break
+        if SettingManager.config['filter_box_on_the_edge']:
+            for i in range(len(boxes) - 1, -1, -1):
+                box = boxes[i]
+                if box[0] < self.w / 50 or box[1] < self.h / 50 or box[2] > self.w * 0.98 or box[3] > self.h * 0.98:
+                    del boxes[i]
+        return boxes
