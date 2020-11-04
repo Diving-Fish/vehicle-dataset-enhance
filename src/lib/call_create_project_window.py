@@ -34,7 +34,11 @@ class CreateProjectDialog(QDialog, Ui_Dialog):
 
     def pre_read_video(self):
         try:
-            cap = cv2.VideoCapture(self.videoPath.text())
+            path = self.videoPath.text()
+            filename = path[path.rindex('/')+1:path.rindex('.')]
+            if self.projectName.text() == "":
+                self.projectName.setText(filename)
+            cap = cv2.VideoCapture(path)
             self.fps = cap.get(cv2.CAP_PROP_FPS)
             self.nframes = cap.get(cv2.CAP_PROP_FRAME_COUNT)
             self.startTime.setEnabled(True)

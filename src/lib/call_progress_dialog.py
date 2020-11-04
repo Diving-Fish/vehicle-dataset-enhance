@@ -13,12 +13,10 @@ class ProgressDialog(QDialog, Ui_CreateProgressDialog):
         self.parent = parent
         self.setupUi(self)
         self.opt = opt
-        self.t = ProjectCreateThread(self.opt, self.progressBar, self.pushButton)
+        self.t = ProjectCreateThread(self.opt)
         self.show()
         self.t.start()
-        self.pushButton.clicked.connect(self.finish_create)
-        self.pushButton.setEnabled(False)
-
-    def finish_create(self):
+        self.t.join()
         self.close()
         self.parent.finish_create()
+

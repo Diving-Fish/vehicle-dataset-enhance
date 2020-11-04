@@ -2,8 +2,10 @@ import threading
 import time
 from collections import defaultdict
 
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QAction
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QAction, QApplication, QShortcut
 from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtCore import *
 
 from lib.call_dialog import Dialog
 from lib.main_window import Ui_MainWindow
@@ -17,15 +19,62 @@ from cv2 import cv2
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        self.names = ['Sedan',
+                      'Hatchback',
+                      'Suv',
+                      'Taxi',
+                      'Bus',
+                      'Van',
+                      'MiniVan',
+                      'Truck-Box-Large',
+                      'Truck-Box-Med',
+                      'Truck-Util',
+                      'Truck-Flatbed',
+                      'Truck-Pickup',
+                      'Police',
+                      'Red',
+                      'Orange',
+                      'Yellow',
+                      'Green',
+                      'Blue',
+                      'Beige',
+                      'Brown',
+                      'White',
+                      'Silver',
+                      'Gray',
+                      'Black',
+                      'Multi']
         self.setupUi(self)
+        self.mark_map = None
+        self.cap = None
         self.createProjectButton.triggered.connect(self.new_project)
         self.loadProjectButton.triggered.connect(self.load_project)
         self.settingButton.triggered.connect(self.setting)
+        self.saveProjectButton.triggered.connect(self.save)
         self.exportData.setEnabled(False)
         self.saveProjectButton.setEnabled(False)
         self.groupBox.setHidden(True)
         self.groupBox_2.setHidden(True)
         self.show()
+        QShortcut(QKeySequence.Undo, self, self.undo)
+        QShortcut(QKeySequence.Save, self, self.save)
+        QShortcut(Qt.Key_Space, self, self.jump_to_next_unmarked_vehicle)
+
+    def wheelEvent(self, event) -> None:
+        angle = event.angleDelta().y()
+        self.change_frame(int(-angle / 60))
+
+    def save(self):
+        if not self.mark_map:
+            return
+        with open(self.path, 'w') as fd3:
+            for key in self.mark_map:
+                fd3.write(f'{key} {self.mark_map[key][0]} {self.mark_map[key][1]}\n')
+        fd3.close()
+
+    def undo(self):
+        if self.mark_map:
+            self.mark_map.popitem()
 
     def setting(self):
         self.setting_dialog = SettingDialog()
@@ -49,6 +98,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             # Init mark dict
             self.mark_map = {}
+            self.path = path
             cap = cv2.VideoCapture(project_dir + '/video.mkv')
             fd = open(project_dir + '/track_results.txt', 'r')
             fd2 = open(project_dir + '/detection_results.txt', 'r')
@@ -57,6 +107,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             for line in fd2:
                 arr = line.strip().split(' ')
                 detections[int(arr[0])].append([float(arr[1]), float(arr[2]), float(arr[3]), float(arr[4])])
+            fd2.close()
             # Load tracks
             track_results = defaultdict(list)
             identities = set([])
@@ -64,13 +115,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 arr = line.strip().split(' ')
                 track_results[int(arr[0])].append([int(arr[2]), int(arr[3]), int(arr[4]), int(arr[5]), int(arr[1])])
                 identities.add(int(arr[1]))
+            fd.close()
             # Load progress
             with open(path, 'r') as fd3:
                 for line in fd3:
                     arr = line.strip().split(' ')
                     if len(arr) == 0:
                         continue
-                    self.markmap[int(arr[0])] = (int(arr[1]), int(arr[2]))
+                    self.mark_map[int(arr[0])] = (int(arr[1]), int(arr[2]))
+                fd3.close()
         except Exception as e:
             print(e)
             self.dialog = Dialog("请选择正确的工程文件")
@@ -78,6 +131,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_video(cap, track_results, detections, identities)
 
     def init_video(self, cap, track_results, detections, identities):
+        if self.cap:
+            self.cap.cap.release()
         # Show Group Box
         self.groupBox.setHidden(False)
         self.groupBox_2.setHidden(False)
@@ -125,6 +180,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cap.frame_no = self.videoSlider.value()
 
     def change_frame(self, value):
+        if not self.cap:
+            return
         self.cap.playing = False
         self.cap.frame_no += value
         if self.cap.frame_no < 0:
@@ -134,6 +191,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.videoSlider.setValue(self.cap.frame_no)
 
     def jump_to_next_unmarked_vehicle(self):
+        if not self.cap:
+            return
         for i in range(self.cap.frame_no, self.cap.frame_count):
             for detections in self.track_results[i]:
                 if detections[4] not in self.mark_map:
@@ -220,8 +279,16 @@ class VideoThread(threading.Thread):
         for box in boxes:
             x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
             id = box[4]
-            label = '{}{:d}'.format("", id)
-            color = (0, 0, 255) if id not in self.window.mark_map else (0, 255, 0)
+            label = f"{id}"
+            if id in self.window.mark_map:
+                color = (0, 255, 0)
+                t = self.window.mark_map[id]
+                if t[0] != -1:
+                    label += f" {self.window.names[t[0]]}({self.window.names[t[1]]})"
+            elif self.window.identity == id:
+                color = (255, 0, 0)
+            else:
+                color = (0, 0, 255)
             # print(color)
             t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
             cv2.rectangle(self.frame, (x1, y1), (x2, y2), color, 3)
@@ -236,7 +303,7 @@ class VideoThread(threading.Thread):
             for box in boxes:
                 cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
                 for detection in detections:
-                    if abs(cx - detection[0]) < self.w / 50 and abs(cy - detection[1]) < self.h / 50:
+                    if abs(cx - detection[0]) < self.w / 10 and abs(cy - detection[1]) < self.h / 50:
                         box[0] = int(detection[0] - detection[2] / 2)
                         box[1] = int(detection[1] - detection[3] / 2)
                         box[2] = int(detection[0] + detection[2] / 2)
