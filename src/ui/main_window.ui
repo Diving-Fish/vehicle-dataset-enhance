@@ -340,6 +340,7 @@
     <addaction name="saveProjectButton"/>
     <addaction name="separator"/>
     <addaction name="exportData"/>
+    <addaction name="exportDataWithoutUnmarked"/>
    </widget>
    <widget class="QMenu" name="settingMenu">
     <property name="title">
@@ -373,6 +374,14 @@
   <action name="settingButton">
    <property name="text">
     <string>设置</string>
+   </property>
+  </action>
+  <action name="exportDataWithoutUnmarked">
+   <property name="text">
+    <string>导出数据(不含未标记的帧)</string>
+   </property>
+   <property name="statusTip">
+    <string/>
    </property>
   </action>
  </widget>

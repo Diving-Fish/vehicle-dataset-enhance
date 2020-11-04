@@ -51,7 +51,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.loadProjectButton.triggered.connect(self.load_project)
         self.settingButton.triggered.connect(self.setting)
         self.saveProjectButton.triggered.connect(self.save)
+        self.playButton.clicked.connect(self.play)
+        self.prevFrameButton.clicked.connect(lambda: self.change_frame(-1))
+        self.nextFrameButton.clicked.connect(lambda: self.change_frame(1))
+        self.jumpFrameButton.clicked.connect(self.jump_to_next_unmarked_vehicle)
+        self.markButton.clicked.connect(self.mark)
+        self.ignoreButton.clicked.connect(self.ignore)
+        self.videoSlider.sliderMoved.connect(self.change_video_slider)
+        self.exportData.triggered.connect(lambda: self.export(False))
+        self.exportDataWithoutUnmarked.triggered.connect(lambda: self.export(True))
         self.exportData.setEnabled(False)
+        self.exportDataWithoutUnmarked.setEnabled(False)
         self.saveProjectButton.setEnabled(False)
         self.groupBox.setHidden(True)
         self.groupBox_2.setHidden(True)
@@ -147,15 +157,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.videoSlider.setMinimum(0)
         self.videoSlider.setMaximum(self.cap.frame_count - 1)
         # Init button functions
-        self.playButton.clicked.connect(self.play)
-        self.prevFrameButton.clicked.connect(lambda: self.change_frame(-1))
-        self.nextFrameButton.clicked.connect(lambda: self.change_frame(1))
-        self.jumpFrameButton.clicked.connect(self.jump_to_next_unmarked_vehicle)
-        self.markButton.clicked.connect(self.mark)
-        self.ignoreButton.clicked.connect(self.ignore)
-        self.videoSlider.sliderMoved.connect(self.change_video_slider)
-        self.exportData.triggered.connect(self.export)
         self.exportData.setEnabled(True)
+        self.exportDataWithoutUnmarked.setEnabled(True)
         self.saveProjectButton.setEnabled(True)
 
     def update_identity(self):
@@ -210,7 +213,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.mark_map[self.identity] = (-1, -1)
         self.update_identity()
 
-    def export(self):
+    def export(self, except_unmarked):
         path, file_type = QFileDialog.getSaveFileName(self, 'Save as...', os.getcwd(), ".txt", ".txt")
         if path == '':
             return False
@@ -218,15 +221,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         fw = open(path + '.txt' if path[-4:] != '.txt' else '', 'w')
         for frame in self.track_results:
             detections = self.cap.get_boxes(frame)
+            buff = ''
             for detection in detections:
                 if detection[4] in self.mark_map:
                     tup = self.mark_map[detection[4]]
                     if tup[0] == -1:
                         continue
-                    fw.write(f'{frame} {tup[0]} {tup[1]} {(detection[0] + detection[2]) / 2 / w} '
+                    buff += (f'{frame} {tup[0]} {tup[1]} {(detection[0] + detection[2]) / 2 / w} '
                              f'{(detection[1] + detection[3]) / 2 / w} '
                              f'{(detection[2] - detection[0]) / w} '
                              f'{(detection[3] - detection[1]) / w}\n')
+                elif except_unmarked:
+                    buff = ''
+                    break
+            fw.write(buff)
         fw.close()
 
 
