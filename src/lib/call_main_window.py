@@ -55,6 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.prevFrameButton.clicked.connect(lambda: self.change_frame(-1))
         self.nextFrameButton.clicked.connect(lambda: self.change_frame(1))
         self.jumpFrameButton.clicked.connect(self.jump_to_next_unmarked_vehicle)
+        self.identityComboBox.currentIndexChanged.connect(lambda: self.change_identity(self.identityComboBox.currentIndex()))
         self.markButton.clicked.connect(self.mark)
         self.ignoreButton.clicked.connect(self.ignore)
         self.videoSlider.sliderMoved.connect(self.change_video_slider)
@@ -148,6 +149,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.groupBox_2.setHidden(False)
 
         self.identity = 0
+        self.current_identities = []
         self.identities = identities
         self.track_results = track_results
         self.detections = detections
@@ -161,17 +163,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.exportDataWithoutUnmarked.setEnabled(True)
         self.saveProjectButton.setEnabled(True)
 
-    def update_identity(self):
+    def update_identity(self, index=-1):
+        flag = False
+
+        self.current_identities = []
         for detections in self.track_results[self.cap.frame_no]:
             if detections[4] not in self.mark_map:
-                self.identity = detections[4]
-                self.identityLabel.setText(f"Vehicle #{detections[4]}")
-                self.widget.setHidden(False)
-                return
+                flag = True
+                self.current_identities.append(detections[4])
+
+        if flag:
+            self.identityComboBox.clear()
+            self.widget.setHidden(False)
+            self.identityLabel.setText("该帧仍有未标记的车辆")
+            # if self.identity in self.current_identities:
+            #     self.identity = self.current_identities[self.current_identities.index(self.identity) + 1]
+            # else:
+            if index + 1 < len(self.current_identities):
+                self.identity = self.current_identities[index+1]
+                self.identityComboBox.setCurrentIndex(index+1)
+            else:
+                if self.identity in self.current_identities:
+                    self.identityComboBox.setCurrentIndex(self.current_identities.index(self.identity))
+                else:
+                    self.identity = self.current_identities[0]
+                    self.identityComboBox.setCurrentIndex(0)
+            for elem in self.current_identities:
+                self.identityComboBox.addItem(str(elem))
+            return
         self.widget.setHidden(True)
         if len(self.identities) == len(self.mark_map):
             self.identityLabel.setText("所有车辆均已标记")
-        else:
+        elif not flag:
             self.identityLabel.setText("该帧的所有车辆已标记完毕")
 
     def refresh_status_bar(self):
@@ -181,6 +204,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def change_video_slider(self):
         self.cap.playing = False
         self.cap.frame_no = self.videoSlider.value()
+
+    def change_identity(self, index):
+        self.identity = self.current_identities[index]
 
     def change_frame(self, value):
         if not self.cap:
@@ -207,11 +233,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def mark(self):
         self.mark_map[self.identity] = (self.typeComboBox.currentIndex(), 13 + self.colorComboBox.currentIndex())
-        self.update_identity()
+        self.update_identity(self.current_identities.index(self.identity))
 
     def ignore(self):
         self.mark_map[self.identity] = (-1, -1)
-        self.update_identity()
+        self.update_identity(self.current_identities.index(self.identity))
 
     def export(self, except_unmarked):
         path, file_type = QFileDialog.getSaveFileName(self, 'Save as...', os.getcwd(), ".txt", ".txt")

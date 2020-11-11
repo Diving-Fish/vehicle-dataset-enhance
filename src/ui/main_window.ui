@@ -119,7 +119,7 @@
           </rect>
          </property>
          <property name="text">
-          <string>Vehicle #1</string>
+          <string>该帧仍有未标记的车辆</string>
          </property>
         </widget>
         <widget class="QWidget" name="widget" native="true">
@@ -127,12 +127,48 @@
           <rect>
            <x>20</x>
            <y>60</y>
-           <width>211</width>
-           <height>151</height>
+           <width>221</width>
+           <height>191</height>
           </rect>
          </property>
-         <layout class="QGridLayout" name="gridLayout_4" rowstretch="0,0,0,0">
+         <layout class="QGridLayout" name="gridLayout_4">
           <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>车辆编号</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="identityComboBox">
+              <property name="minimumSize">
+               <size>
+                <width>125</width>
+                <height>0</height>
+               </size>
+              </property>
+              <item>
+               <property name="text">
+                <string>1</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>2</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>3</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0">
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QLabel" name="label">
@@ -219,20 +255,6 @@
            </layout>
           </item>
           <item row="2" column="0">
-           <widget class="QPushButton" name="markButton">
-            <property name="text">
-             <string>标记</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QPushButton" name="ignoreButton">
-            <property name="text">
-             <string>忽略</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QLabel" name="label_2">
@@ -312,6 +334,20 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="markButton">
+            <property name="text">
+             <string>标记</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QPushButton" name="ignoreButton">
+            <property name="text">
+             <string>忽略</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
